@@ -1,0 +1,700 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>DIVINE BAZAAR365 SURPRISE CARDS GAME</title>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== Reset / बेसिक सेटअप ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; }
+    body {
+      font-family: 'Luckiest Guy', cursive;
+      background: linear-gradient(120deg, #fff9f0, #f5e9dc, #fff9f0);
+      background-size: 200% 200%;
+      animation: bgShift 20s ease infinite;
+      overflow-x: hidden;
+      color: #333;
+    }
+    @keyframes bgShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ===== Header + Logo ===== */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      z-index: 1200;
+    }
+    header img { height: 40px; width: 40px; margin-right: 0.5rem; }
+    header h1 { font-size: 1.5rem; color: #6b4f29; }
+
+    /* ===== Offer Sticker (काउंटडाउन) ===== */
+    .sticker {
+      position: fixed;
+      left: 1rem;                /* बाएँ फिक्स्ड, comment बटन के ऊपर */
+      bottom: 6.5rem;            /* comment button (~1rem) + उसका height (~2.5rem) + margin */
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+      z-index: 1100;
+      display: flex;
+      gap: 0.3rem;
+      align-items: center;
+    }
+    .sticker .timer {
+      font-family: monospace;
+      background: transparent;
+      color: #fff;
+      padding: 0;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      text-shadow: 0 0 3px rgba(0,0,0,0.7);
+    }
+
+    /* ===== Hint Box ===== */
+    .hint-box {
+      position: fixed;
+      top: 7rem;                /* panel के ऊपर_RIGHT corner के पास */
+      right: 1rem;
+      color: #fff;
+      font-size: 1rem;
+      text-shadow: 0 0 4px rgba(0,0,0,0.8);
+      z-index: 1100;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    /* ===== Overlay for modals ===== */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      z-index: 900;
+    }
+
+    /* ===== Main Panel (cards + heading) ===== */
+    .panel {
+      width: 95%;
+      max-width: 900px;
+      margin: 6.5rem auto 2rem;   /* हेडर के बाद जगह */
+      padding: 2rem;
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      position: relative;
+    }
+    .panel h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: #6b4f29; }
+    .panel h2 { font-size: 0.75rem; margin-bottom: 2rem; color: #444; }
+
+    /* ===== Cards Grid (4×3) ===== */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    .gift-card {
+      width: 100%;
+      position: relative;
+      padding-top: 100%;      /* स्क्वायर */
+      perspective: 1500px;
+      cursor: pointer;
+      background: #f0f0f0;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      animation: pop 2s ease-in-out infinite;
+    }
+    @keyframes pop {
+      0%,100% { transform: rotate(0); }
+      25% { transform: rotate(2deg); }
+      50% { transform: rotate(-2deg); }
+      75% { transform: rotate(2deg); }
+    }
+    .gift-card.touched { animation: none; }
+
+    .card-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.8s;
+      transform-style: preserve-3d;
+    }
+    .card-inner.flipped { transform: rotateY(180deg); }
+
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .card-front {
+      background: linear-gradient(135deg, #8b5e34, #6b4f29);
+    }
+    .card-front img { width: 58px; height: 58px; }
+
+    .card-back {
+      background: #fff;
+      transform: rotateY(180deg);
+      padding: 0.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .prize-img {
+      width: 100%;
+      max-height: 60%;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 0.25rem;
+    }
+    .prize-name {
+      margin: 0.25rem 0;
+      font-size: 0.1rem;
+      color: #333;
+      font-weight: bold;
+      text-align: center;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .prize-th {
+      font-size: 0.75rem;
+      color: #6b4f29;
+      margin-top: 0.25rem;
+    }
+    .card-back-logo {
+      width: 18px;
+      height: 18px;
+      align-self: flex-end;
+      opacity: 0.8;
+    }
+
+    /* ===== Modals Base ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      width: 90%;
+      max-width: 350px;
+      text-align: center;
+    }
+    .modal.show {
+      transform: translate(-50%, -50%) scale(1);
+      display: block;
+    }
+    .modal h2 { margin-bottom: 0.75rem; color: #6b4f29; font-size: 1.25rem; }
+    .modal p { margin-bottom: 1rem; color: #444; font-size: 1rem; }
+    .modal label {
+      display: block;
+      margin: 0.5rem 0 0.25rem;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+    .modal input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+    .modal input[type='checkbox'] { width: auto; margin-right: 0.5rem; vertical-align: middle; }
+    .error {
+      color: #d32f2f;
+      font-size: 0.85rem;
+      text-align: left;
+      margin: 0.25rem 0;
+      display: none;
+    }
+    button {
+      background: #6b4f29;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    button:hover { background: #8b4f34; }
+    textarea {
+      width: 100%;
+      height: 60px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 0.5rem;
+      resize: vertical;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .progress-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .step {
+      flex: 1;
+      height: 8px;
+      border-radius: 4px;
+      background: #ddd;
+    }
+    .step.active { background: #6b4f29; }
+
+    .floating-comments {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      width: 50px;
+      height: 50px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 1100;
+    }
+    .floating-comments img { width: 24px; height: 24px; }
+
+    .social-buttons {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1100;
+    }
+    .social-buttons a {
+      width: 50px;
+      height: 50px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-decoration: none;
+    }
+    .social-buttons img { width: 28px; height: 28px; }
+
+    /* ===== Footer ===== */
+    footer {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 1rem;
+      background: #fff7ec;
+      font-size: 0.9rem;
+      color: #555;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+
+    /* मोबाइल पर भी हमेशा 4 कॉलम दिखाएँ */
+    @media (max-width: 768px) {
+      .cards-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .cards-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header + Logo -->
+  <header>
+    <img src="https://i.ibb.co/k2DswzNV/IMG-4499.jpg" alt="Divine Bazaar365 Logo">
+    <h1>DIVINE BAZAAR365</h1>
+  </header>
+
+  <!-- Offer Sticker (काउंटडाउन, LEFT SIDE) -->
+  <div class="sticker">
+    <span>Offer ends</span>
+    <span class="timer" id="countdown">--:--:--</span>
+  </div>
+
+  <!-- Hint Box -->
+  <div class="hint-box" id="hintBox">Tap a card to start</div>
+
+  <!-- Overlay for modals -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- Comments Panel (डिफ़ॉल्ट छिपा) -->
+  <div class="comments-panel" id="commentsPanel" style="display:none;">
+    <h3>User Feedbacks</h3>
+    <div id="commentsList"></div>
+  </div>
+
+  <!-- Main Panel (Cards + Heading) -->
+  <div class="panel">
+    <h1>DIVINE BAZAAR365 Surprise Cards Game</h1>
+    <h2>Flip a card to win a free gift!</h2>
+
+    <!-- Cards Grid -->
+    <div id="cardsGrid" class="cards-grid"></div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+  </div>
+
+  <!-- Form Modal -->
+  <div id="formModal" class="modal">
+    <h2>Enter Your Details</h2>
+    <label for="firstName">First Name*</label>
+    <input type="text" id="firstName" placeholder="Enter Your First Name" />
+    <div id="firstNameError" class="error">Required</div>
+
+    <label for="lastName">Last Name*</label>
+    <input type="text" id="lastName" placeholder="Enter Your Last Name" />
+    <div id="lastNameError" class="error">Required</div>
+
+    <label for="mobile">Mobile*</label>
+    <input type="tel" id="mobile" placeholder="Please enter your number" />
+    <div id="mobileError" class="error">Invalid number</div>
+
+    <label>
+      <input type="checkbox" id="consent" />
+      I agree to WhatsApp updates
+    </label>
+    <div id="consentError" class="error">Required</div>
+
+    <button class="btn" id="formSubmitBtn">Submit</button>
+  </div>
+
+  <!-- Congratulations Modal -->
+  <div id="congratsModal" class="modal">
+    <h2 id="congratsTitle"></h2>
+    <img id="congratsPrizeImg" style="width:100px; height:100px; border-radius:10px; margin:1rem auto;" />
+    <p id="congratsDesc"></p>
+    <button class="btn" id="congratsOkBtn">OK</button>
+  </div>
+
+  <!-- WhatsApp Share Modal -->
+  <div id="whatsappPanel" class="modal">
+    <h2>Share to Unlock</h2>
+    <div class="progress-bar" id="shareProgress">
+      <div class="step"></div>
+      <div class="step"></div>
+      <div class="step"></div>
+      <div class="step"></div>
+      <div class="step"></div>
+    </div>
+    <button class="btn" id="shareBtn">Share on WhatsApp</button>
+  </div>
+
+  <!-- Share Confirmation Modal -->
+  <div id="shareConfirm" class="modal">
+    <h2>Great! 🎉</h2>
+    <p>You've shared with 5 people. Proceed to claim your prize!</p>
+    <button class="btn" id="shareOkBtn">Proceed</button>
+  </div>
+
+  <!-- Thank You Modal -->
+  <div id="thankYouModal" class="modal">
+    <h2>Thank You!</h2>
+    <p>For Supporting Our Small Business</p>
+    <textarea id="feedbackInput" placeholder="Optional feedback..."></textarea>
+    <button class="btn" id="submitFeedbackBtn">Submit & Send via WhatsApp</button>
+  </div>
+
+  <!-- Floating Buttons -->
+  <div class="floating-comments" id="commentsBtn">
+    <img src="https://img.icons8.com/ios-filled/50/000000/comments.png" alt="Comments" />
+  </div>
+  <div class="social-buttons">
+    <a href="https://wa.me/c/918879121798" target="_blank" rel="noopener">
+      <img src="https://img.icons8.com/ios-filled/50/25D366/whatsapp.png" alt="WhatsApp" />
+    </a>
+    <a href="https://www.instagram.com/divine_bazaar365?igsh=MTBmd3Zha3Bibzh1cw==" target="_blank" rel="noopener">
+      <img src="https://img.icons8.com/ios-filled/50/E4405F/instagram-new.png" alt="Instagram" />
+    </a>
+    <a href="https://divinebazaar365.netlify.app/" target="_blank" rel="noopener">
+      <img src="https://img.icons8.com/ios-filled/50/000000/globe.png" alt="Website" />
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    Contact No: 9867677928 / 8879121798<br>
+    Address: The Crest Building Orlem Church, 2, Orlem Tank Rd, Malad West, Mumbai, Maharashtra 400067
+  </footer>
+
+  <!-- Confetti लाइब्रेरी (canvas-confetti) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script>
+    /* ===== Google Sheets Script URL ===== */
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzcycGH6zSGVNTMTpigEgJyRXNx3ScyqTT_YuNThu7iwDjlL_cG1icqMBQULpsNxRIXAA/exec';
+
+    /* ===== Prize Data (12 कार्ड) ===== */
+    const prizes = [
+      { img: 'https://i.ibb.co/2zq28QQ/Ladybug-Insect-Wall-Mount-PNG.jpg', name: 'Ladybug Insect Wall Mount', th: 343 },
+      { img: 'https://i.ibb.co/MxmG0z5X/Mobile-Phone-Finger-Stand-PNG.jpg', name: 'Mobile Phone Finger Stand', th: 197 },
+      { img: 'https://i.ibb.co/FknpfCJ4/Deer-Head-Hanging-Hook-PNG.jpg', name: 'Deer Head Hanging Hook', th: 292 },
+      { img: 'https://i.ibb.co/rR0HTP5z/Mini-Chair-Shape-Phone-Stand-PNG.jpg', name: 'Mini Chair Shape Phone Stand', th: 246 },
+      { img: 'https://i.ibb.co/zTxCXmqJ/2-in-1-Cute-Cartoon-Couple-Keychain-PNG.jpg', name: 'Couple Keychain', th: 593 },
+      { img: 'https://i.ibb.co/bMGMYYSW/Electric-Handheld-Milk-Wand-Mixer-PNG.jpg', name: 'Milk Wand Mixer', th: 491 },
+      { img: 'https://i.ibb.co/0y8QsCVd/Mini-Traveler-Sewing-Kit-PNG.jpg', name: 'Sewing Kit', th: 494 },
+      { img: 'https://i.ibb.co/Kzs3xQDZ/Minions-Hot-Water-Bag-PNG.jpg', name: 'Minions Hot Water Bag', th: 497 },
+      { img: 'https://i.ibb.co/Y4FhXg2X/Round-Silicone-Foldable-Glass-PNG.jpg', name: 'Foldable Glass', th: 392 },
+      { img: 'https://i.ibb.co/JjkxXmKg/LED-Battery-Operated-Key-Chain-PNG.jpg', name: 'LED Key Chain', th: 413 },
+      { img: 'https://i.ibb.co/8nmXHS22/Manual-Drinking-Water-Pump-PNG.jpg', name: 'Water Pump', th: 468 },
+      { img: 'https://i.ibb.co/6chKzC4M/Unique-Shape-Phone-Stand-PNG.jpg', name: 'Unique Keychain', th: 192 }
+    ];
+
+    let formDone = false,
+        pendingFlip = null,
+        selectedIdx = null,
+        shareCount = 0;
+
+    /* ===== Timer: ऑफ़र काउंटडाउन ===== */
+    let endTime = Date.now() + Math.floor(Math.random() * 86400000); // अगले 24 घंटे में कहीं एक रैंडम पॉइंट
+    setInterval(() => {
+      const d = endTime - Date.now();
+      if (d <= 0) {
+        document.getElementById('countdown').innerText = '00:00:00';
+        return;
+      }
+      const h = String(Math.floor(d / 3600000)).padStart(2,'0');
+      const m = String(Math.floor((d % 3600000) / 60000)).padStart(2,'0');
+      const s = String(Math.floor((d % 60000) / 1000)).padStart(2,'0');
+      document.getElementById('countdown').innerText = `${h}:${m}:${s}`;
+    }, 1000);
+
+    /* ===== Show / Hide Modal Functions ===== */
+    function showModal(id) {
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById(id).classList.add('show');
+    }
+    function hideModals() {
+      document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    /* ===== Google Sheets में डेटा भेजना ===== */
+    function sendToSheet(data) {
+      const params = new URLSearchParams(data).toString();
+      fetch(`${scriptURL}?${params}`).catch(e => console.error(e));
+    }
+
+    /* ===== Init Game: Shuffle + कार्ड्स ग्रिड बनाना ===== */
+    function initGame() {
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = '';
+      formDone = false;
+      pendingFlip = null;
+      selectedIdx = null;
+      shareCount = 0;
+      hideModals();
+      document.getElementById('hintBox').innerText = 'Tap a card to start';
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+
+      // Shuffle prizes array
+      const shuffled = prizes.slice().sort(() => 0.5 - Math.random());
+      shuffled.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'gift-card';
+        card.onclick = () => {
+          if (formDone) flipCard(i, shuffled);
+          else {
+            pendingFlip = () => flipCard(i, shuffled);
+            showModal('formModal');
+          }
+        };
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">
+              <img src="https://i.ibb.co/k2DswzNV/IMG-4499.jpg" alt="Logo">
+            </div>
+            <div class="card-back">
+              <img src="${p.img}" class="prize-img" alt="${p.name}">
+              <div class="prize-name">${p.name}</div>
+              <div class="prize-th">Free on ₹${p.th}</div>
+              <img src="https://i.ibb.co/k2DswzNV/IMG-4499.jpg" class="card-back-logo" alt="Logo">
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      });
+    }
+
+    /* ===== Flip Logic: चुनें हुए कार्ड को तुरंत फ्लिप + बाक़ी को सीक्वेंस में फ्लिप ===== */
+    function flipCard(i, arr) {
+      if (selectedIdx !== null) return;
+      selectedIdx = i;
+      const cards = Array.from(document.querySelectorAll('.gift-card'));
+      const chosen = cards[i];
+      const prize = arr[i];
+      // चुनें हुए कार्ड को तुरंत फ्लिप
+      chosen.querySelector('.card-inner').classList.add('flipped');
+      chosen.classList.add('touched');
+      // बाक़ी कार्ड्स को एक-एक करके फ्लिप
+      const others = cards.filter((c, idx) => idx !== i);
+      others.forEach((c, k) => {
+        setTimeout(() => {
+          c.querySelector('.card-inner').classList.add('flipped');
+          c.classList.add('touched');
+        }, (k + 1) * 300);
+      });
+      // सारे फ्लिप्स के बाद, congratulations दिखाएँ और डेटा भेजें
+      const totalDelay = (others.length + 1) * 300;
+      setTimeout(() => {
+        document.getElementById('congratsTitle').innerText = `Congratulations! 🎉 You've won a ${prize.name}! 🎁`;
+        document.getElementById('congratsDesc').innerText = `Enjoy this FREE gift when you shop for ₹${prize.th} or more with Divine Bazaar365.`;        document.getElementById('congratsPrizeImg').src = prize.img;
+        // Confetti Animation
+        confetti({ particleCount: 40, spread: 70, origin: { x: 0.2, y: 0.4 } });
+        confetti({ particleCount: 40, spread: 70, origin: { x: 0.8, y: 0.4 } });
+        showModal('congratsModal');
+        // गूगल शीट्स में विजेता डेटा भेजें (फीडबैक अभी नहीं)
+        const fn = document.getElementById('firstName').value.trim();
+        const ln = document.getElementById('lastName').value.trim();
+        const mb = document.getElementById('mobile').value.trim();
+        const ts = new Date().toISOString();
+        sendToSheet({
+          firstName: fn,
+          lastName: ln,
+          mobile: mb,
+          prizeName: prize.name,
+          priceThreshold: prize.th,
+          timestamp: ts,
+          feedback: ''
+        });
+      }, totalDelay);
+    }
+
+    /* ===== Modal Event Handlers ===== */
+    document.getElementById('formSubmitBtn').onclick = () => {
+      const fnEl = document.getElementById('firstName'),
+            lnEl = document.getElementById('lastName'),
+            mbEl = document.getElementById('mobile'),
+            ctEl = document.getElementById('consent');
+      let valid = true;
+      if (!fnEl.value.trim()) { document.getElementById('firstNameError').style.display = 'block'; valid = false; }
+      else { document.getElementById('firstNameError').style.display = 'none'; }
+      if (!lnEl.value.trim()) { document.getElementById('lastNameError').style.display = 'block'; valid = false; }
+      else { document.getElementById('lastNameError').style.display = 'none'; }
+      if (!(/^[6-9]\d{9}$/.test(mbEl.value))) { document.getElementById('mobileError').style.display = 'block'; valid = false; }
+      else { document.getElementById('mobileError').style.display = 'none'; }
+      if (!ctEl.checked) { document.getElementById('consentError').style.display = 'block'; valid = false; }
+      else { document.getElementById('consentError').style.display = 'none'; }
+      if (!valid) return;
+
+      formDone = true;
+      hideModals();
+      document.getElementById('hintBox').innerText = 'Tap a card to start';
+      if (pendingFlip) {
+        pendingFlip();
+        pendingFlip = null;
+      }
+    };
+
+    document.getElementById('congratsOkBtn').onclick = () => {
+      hideModals();
+      showModal('whatsappPanel');
+      document.getElementById('hintBox').innerText = 'Share 0/5';
+    };
+
+    document.getElementById('shareBtn').onclick = () => {
+      const baseMessage = "Hey, listen i just found this link, thought I'll share it with you. It's a mystery card game -- opened it just for fun and actually enjoyed it. You flip a card and see what you win… stuff's decent and prices are pretty good too. Might be worth a try. Here's the link:";
+      const gameLink = "https://divinebazaar365.netlify.app/";
+      const fullMessage = `${baseMessage} ${gameLink}`;
+      window.open('https://wa.me/?text=' + encodeURIComponent(fullMessage), '_blank');
+      document.querySelectorAll('.step')[shareCount].classList.add('active');
+      shareCount++;
+      document.getElementById('hintBox').innerText = `Share ${shareCount}/5`;
+      if (shareCount === 5) {
+        hideModals();
+        showModal('shareConfirm');
+      }
+    };
+
+    document.getElementById('shareOkBtn').onclick = () => {
+      hideModals();
+      showModal('thankYouModal');
+      document.getElementById('hintBox').innerText = 'Submit & Share details';
+    };
+
+    document.getElementById('submitFeedbackBtn').onclick = () => {
+      // Send feedback/details to Google Sheets
+      const fb = document.getElementById('feedbackInput').value.trim() || 'No feedback';
+      const fn = document.getElementById('firstName').value.trim();
+      const ln = document.getElementById('lastName').value.trim();
+      const mb = document.getElementById('mobile').value.trim();
+      const prize = prizes[selectedIdx];
+      const ts = new Date().toISOString();
+      sendToSheet({
+        firstName: fn,
+        lastName: ln,
+        mobile: mb,
+        prizeName: prize.name,
+        priceThreshold: prize.th,
+        timestamp: ts,
+        feedback: fb
+      });
+
+      // Format WhatsApp message with prize details & image URL
+      const message = `
+Congratulations from Divine Bazaar365! 🎉
+You've won a ${prize.name}! 🎁
+Claim your prize by shopping for ₹${prize.th} or more at https://divinebazaar365.netlify.app/
+Prize Image: ${prize.img}
+My Details:
+Name: ${fn} ${ln}
+Mobile: ${mb}
+Feedback: ${fb}
+Thank you for participating!
+      `;
+      window.open('https://wa.me/918879121798?text=' + encodeURIComponent(message.trim()), '_blank');
+
+      hideModals();
+    };
+
+    document.getElementById('commentsBtn').onclick = () => {
+      const panel = document.getElementById('commentsPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    };
+
+    /* ===== Initialize on load ===== */
+    window.onload = initGame;
+  </script>
+</body>
+</html>
